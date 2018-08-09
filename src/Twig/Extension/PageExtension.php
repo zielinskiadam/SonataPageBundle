@@ -11,6 +11,8 @@
 
 namespace Sonata\PageBundle\Twig\Extension;
 
+use Application\Sonata\PageBundle\Service\PageExtensionPlugin;
+
 use Sonata\BlockBundle\Templating\Helper\BlockHelper;
 use Sonata\PageBundle\CmsManager\CmsManagerSelectorInterface;
 use Sonata\PageBundle\Exception\PageNotFoundException;
@@ -75,22 +77,28 @@ class PageExtension extends AbstractExtension implements InitRuntimeInterface
      * @var bool
      */
     private $hideDisabledBlocks;
+    /**
+     * @var PageExtensionPlugin
+     */
+    private $pageExtensionPlugin;
 
     /**
-     * @param CmsManagerSelectorInterface $cmsManagerSelector  A CMS manager selector
-     * @param SiteSelectorInterface       $siteSelector        A site selector
-     * @param RouterInterface             $router              The Router
-     * @param BlockHelper                 $blockHelper         The Block Helper
-     * @param HttpKernelExtension         $httpKernelExtension
-     * @param bool                        $hideDisabledBlocks
+     * @param CmsManagerSelectorInterface $cmsManagerSelector A CMS manager selector
+     * @param SiteSelectorInterface $siteSelector A site selector
+     * @param RouterInterface $router The Router
+     * @param BlockHelper $blockHelper The Block Helper
+     * @param HttpKernelExtension $httpKernelExtension
+     * @param PageExtensionPlugin $pageExtensionPlugin
+     * @param bool $hideDisabledBlocks
      */
-    public function __construct(CmsManagerSelectorInterface $cmsManagerSelector, SiteSelectorInterface $siteSelector, RouterInterface $router, BlockHelper $blockHelper, HttpKernelExtension $httpKernelExtension, $hideDisabledBlocks = false)
+    public function __construct(CmsManagerSelectorInterface $cmsManagerSelector, SiteSelectorInterface $siteSelector, RouterInterface $router, BlockHelper $blockHelper, HttpKernelExtension $httpKernelExtension, PageExtensionPlugin $pageExtensionPlugin, $hideDisabledBlocks = false)
     {
         $this->cmsManagerSelector = $cmsManagerSelector;
         $this->siteSelector = $siteSelector;
         $this->router = $router;
         $this->blockHelper = $blockHelper;
         $this->httpKernelExtension = $httpKernelExtension;
+        $this->pageExtensionPlugin = $pageExtensionPlugin;
         $this->hideDisabledBlocks = $hideDisabledBlocks;
     }
 
@@ -238,6 +246,9 @@ class PageExtension extends AbstractExtension implements InitRuntimeInterface
      */
     public function renderBlock(PageBlockInterface $block, array $options = [])
     {
+        if($this->pageExtensionPlugin->isEnabledForLocale($block) === false){
+            return "";
+        }
         if (false === $block->getEnabled() && !$this->cmsManagerSelector->isEditor() && $this->hideDisabledBlocks) {
             return '';
         }
